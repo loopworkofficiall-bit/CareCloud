@@ -1,0 +1,123 @@
+{
+  "name": "CareCloud Intake",
+  "firstMessage": "Thanks for calling CareCloud, this is Riley. Are you calling to register as a new patient?",
+  "firstMessageMode": "assistant-speaks-first",
+  "maxDurationSeconds": 900,
+  "silenceTimeoutSeconds": 30,
+  "endCallFunctionEnabled": true,
+  "endCallMessage": "Thanks for calling CareCloud. Take care.",
+  "backgroundSound": "office",
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "language": "multi",
+    "numerals": true
+  },
+  "voice": {
+    "provider": "vapi",
+    "voiceId": "Elliot"
+  },
+  "model": {
+    "provider": "google",
+    "model": "gemini-2.5-flash",
+    "temperature": 0.3,
+    "systemPromptFile": "vapi/system-prompt.md",
+    "tools": [
+      {
+        "type": "function",
+        "async": false,
+        "function": {
+          "name": "lookup_patient",
+          "description": "Check whether a patient already exists for a phone number. Call this at the very start of every call, before collecting anything. Omit phone_number to use the number the caller is dialling from.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "phone_number": {
+                "type": "string",
+                "description": "US phone number, digits only. Optional; defaults to caller ID."
+              }
+            },
+            "required": []
+          }
+        }
+      },
+      {
+        "type": "function",
+        "async": false,
+        "messages": [
+          { "type": "request-start", "content": "Alright, let me get that saved." }
+        ],
+        "function": {
+          "name": "save_patient",
+          "description": "Create a new patient record. Only call this after the caller has confirmed the read-back. If the response contains invalid, re-ask only the listed fields and call again.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "date_of_birth": { "type": "string", "description": "MM/DD/YYYY" },
+              "sex": {
+                "type": "string",
+                "enum": ["Male", "Female", "Other", "Decline to Answer"]
+              },
+              "phone_number": { "type": "string", "description": "10-digit US number" },
+              "email": { "type": "string" },
+              "address_line_1": { "type": "string" },
+              "address_line_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string", "description": "Two-letter abbreviation, e.g. TX" },
+              "zip_code": { "type": "string", "description": "5 digits or ZIP+4" },
+              "insurance_provider": { "type": "string" },
+              "insurance_member_id": { "type": "string" },
+              "preferred_language": { "type": "string" },
+              "emergency_contact_name": { "type": "string" },
+              "emergency_contact_phone": { "type": "string" }
+            },
+            "required": [
+              "first_name", "last_name", "date_of_birth", "sex", "phone_number",
+              "address_line_1", "city", "state", "zip_code"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "async": false,
+        "messages": [
+          { "type": "request-start", "content": "One moment while I update that." }
+        ],
+        "function": {
+          "name": "update_patient",
+          "description": "Update an existing patient. Use the patient_id returned by lookup_patient. Send only the fields the caller wants changed.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "patient_id": { "type": "string", "description": "UUID from lookup_patient" },
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "date_of_birth": { "type": "string", "description": "MM/DD/YYYY" },
+              "sex": {
+                "type": "string",
+                "enum": ["Male", "Female", "Other", "Decline to Answer"]
+              },
+              "phone_number": { "type": "string" },
+              "email": { "type": "string" },
+              "address_line_1": { "type": "string" },
+              "address_line_2": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "zip_code": { "type": "string" },
+              "insurance_provider": { "type": "string" },
+              "insurance_member_id": { "type": "string" },
+              "preferred_language": { "type": "string" },
+              "emergency_contact_name": { "type": "string" },
+              "emergency_contact_phone": { "type": "string" }
+            },
+            "required": ["patient_id"]
+          }
+        }
+      }
+    ]
+  },
+  "serverMessages": ["end-of-call-report"]
+}
