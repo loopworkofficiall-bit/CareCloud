@@ -4,20 +4,36 @@ import { listPatients, listRecentCalls } from '@/lib/patients';
 // Always read live; a registration from seconds ago must appear.
 export const dynamic = 'force-dynamic';
 
+const INTAKE_LINE = '+1 (843) 638-6075';
+
 type Search = Promise<Record<string, string | string[] | undefined>>;
+type Row = Record<string, unknown>;
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+const str = (v: unknown) => (v == null ? '' : String(v));
 
 function formatPhone(v: unknown) {
-  const d = String(v ?? '');
-  return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : d || '--';
+  const d = str(v).replace(/\D/g, '').slice(-10);
+  return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : str(v);
 }
 
 function formatWhen(v: unknown) {
-  if (!v) return '--';
-  return new Date(String(v)).toLocaleString('en-US', {
+  if (!v) return '';
+  return new Date(str(v)).toLocaleString('en-US', {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
+}
+
+function Field({ label, value, digits, wide }: {
+  label: string; value: string | null; digits?: boolean; wide?: boolean;
+}) {
+  const classes = [digits ? styles.digits : '', value ? '' : styles.absent].join(' ').trim();
+  return (
+    <div className={wide ? styles.wide : undefined}>
+      <dt>{label}</dt>
+      <dd className={classes || undefined}>{value || 'Not provided'}</dd>
+    </div>
+  );
 }
 
 export default async function Dashboard({ searchParams }: { searchParams: Search }) {
@@ -29,14 +45,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Search
   };
   const filtered = Boolean(filter.last_name || filter.phone_number || filter.date_of_birth);
 
-  let patients: Record<string, unknown>[] = [];
-  let calls: Record<string, unknown>[] = [];
+  let patients: Row[] = [];
+  let calls: Row[] = [];
   let error: string | null = null;
 
   try {
     [patients, calls] = await Promise.all([
       listPatients(filter),
-      listRecentCalls(5) as Promise<Record<string, unknown>[]>,
+      listRecentCalls(5) as Promise<Row[]>,
     ]);
   } catch (e) {
     error = e instanceof Error ? e.message : 'Unknown database error';
@@ -44,87 +60,94 @@ export default async function Dashboard({ searchParams }: { searchParams: Search
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>CareCloud patient registry</h1>
-          <p className={styles.subtitle}>Registrations captured by the voice intake agent.</p>
-        </div>
-        <span className={styles.count}>
-          {error ? '--' : `${patients.length} ${patients.length === 1 ? 'patient' : 'patients'}`}
-        </span>
+      <header className={styles.masthead}>
+        <p className={styles.eyebrow}>CareCloud</p>
+        <h1 className={styles.title}>Patient registry</h1>
+        <p className={styles.lede}>
+          Every record below was dictated over the phone to the voice intake line,
+          validated, and written straight to Postgres.
+        </p>
+        <dl className={styles.meta}>
+          <div>
+            <dt>Intake line</dt>
+            <dd>{INTAKE_LINE}</dd>
+          </div>
+          <div>
+            <dt>{filtered ? 'Matching' : 'Registered'}</dt>
+            <dd>{error ? '--' : String(patients.length).padStart(2, '0')}</dd>
+          </div>
+        </dl>
       </header>
 
       {error ? (
-        <div className={styles.error}>
-          <strong>Cannot reach the database.</strong>
+        <div className={styles.notice}>
+          <strong>The registry cannot reach its database.</strong>
           <p>{error}</p>
-          <p className={styles.dim}>
-            Set <code>DATABASE_URL</code> and run <code>npm run db:setup</code>.
-          </p>
+          <p>Set <code>DATABASE_URL</code>, then run <code>npm run db:setup</code>.</p>
         </div>
       ) : (
         <>
-          <form className={styles.search}>
+          <form className={styles.filters}>
             <input className={styles.input} name="last_name" placeholder="Last name"
-              defaultValue={filter.last_name ?? ''} />
+              defaultValue={filter.last_name ?? ''} aria-label="Last name" />
             <input className={styles.input} name="phone_number" placeholder="Phone number"
-              defaultValue={filter.phone_number ?? ''} />
-            <input className={styles.input} name="date_of_birth" placeholder="DOB (MM/DD/YYYY)"
-              defaultValue={filter.date_of_birth ?? ''} />
+              defaultValue={filter.phone_number ?? ''} aria-label="Phone number" />
+            <input className={styles.input} name="date_of_birth" placeholder="Date of birth"
+              defaultValue={filter.date_of_birth ?? ''} aria-label="Date of birth" />
             <button className={styles.button} type="submit">Search</button>
             {filtered && <a className={styles.clear} href="/">Clear</a>}
           </form>
 
-          <div className={styles.scroll}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th><th>DOB</th><th>Sex</th><th>Phone</th>
-                  <th>Address</th><th>Insurance</th><th>Language</th><th>Registered</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patients.map((p) => (
-                  <tr key={String(p.patient_id)}>
-                    <td>{String(p.first_name)} {String(p.last_name)}</td>
-                    <td className={styles.mono}>{String(p.date_of_birth)}</td>
-                    <td>{String(p.sex)}</td>
-                    <td className={styles.mono}>{formatPhone(p.phone_number)}</td>
-                    <td>
-                      {String(p.address_line_1)}
-                      {p.address_line_2 ? `, ${p.address_line_2}` : ''}
-                      {`, ${p.city}, ${p.state} ${p.zip_code}`}
-                    </td>
-                    <td className={p.insurance_provider ? undefined : styles.dim}>
-                      {p.insurance_provider ? String(p.insurance_provider) : 'none'}
-                    </td>
-                    <td>{String(p.preferred_language ?? 'English')}</td>
-                    <td className={styles.dim}>{formatWhen(p.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {patients.length === 0 && (
-              <p className={styles.empty}>
-                {filtered ? 'No patients match that search.' : 'No patients registered yet.'}
-              </p>
-            )}
-          </div>
+          {patients.length === 0 ? (
+            <p className={styles.empty}>
+              <strong>{filtered ? 'No records match that search.' : 'No registrations yet.'}</strong>
+              {filtered ? 'Try a different name, number, or date of birth.'
+                : `Call ${INTAKE_LINE} and the record will appear here.`}
+            </p>
+          ) : (
+            <ol className={styles.records}>
+              {patients.map((p) => (
+                <li key={str(p.patient_id)} className={styles.record}>
+                  <div className={styles.rail}>
+                    <span className={styles.railLabel}>Phone</span>
+                    <span className={styles.railPhone}>{formatPhone(p.phone_number)}</span>
+                    <span className={styles.railNote}>Registered {formatWhen(p.created_at)}</span>
+                  </div>
+                  <div>
+                    <h2 className={styles.name}>{str(p.first_name)} {str(p.last_name)}</h2>
+                    <dl className={styles.fields}>
+                      <Field label="Date of birth" value={str(p.date_of_birth)} digits />
+                      <Field label="Sex" value={str(p.sex)} />
+                      <Field label="Language" value={str(p.preferred_language)} />
+                      <Field label="Insurance" value={str(p.insurance_provider) || null} />
+                      <Field label="Member ID" value={str(p.insurance_member_id) || null} digits />
+                      <Field label="Emergency contact" value={str(p.emergency_contact_name) || null} />
+                      <Field label="Address" wide value={[
+                        str(p.address_line_1),
+                        str(p.address_line_2),
+                        `${str(p.city)}, ${str(p.state)} ${str(p.zip_code)}`,
+                      ].filter(Boolean).join(', ')} />
+                    </dl>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
 
           {calls.length > 0 && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Recent calls</h2>
               {calls.map((c) => (
-                <article key={String(c.call_id)} className={styles.call}>
+                <article key={str(c.call_id)} className={styles.call}>
                   <div className={styles.callMeta}>
                     <span>{formatWhen(c.created_at)}</span>
-                    <span>{formatPhone(String(c.caller_number ?? '').replace(/\D/g, '').slice(-10))}</span>
-                    {c.first_name ? <span>{String(c.first_name)} {String(c.last_name)}</span> : null}
-                    {c.duration_secs ? <span>{String(c.duration_secs)}s</span> : null}
-                    {c.ended_reason ? <span>{String(c.ended_reason)}</span> : null}
+                    {c.caller_number ? <span>{formatPhone(c.caller_number)}</span> : null}
+                    {c.first_name ? <span>{str(c.first_name)} {str(c.last_name)}</span> : null}
+                    {c.duration_secs ? <span>{str(c.duration_secs)}s</span> : null}
+                    {c.ended_reason ? <span>{str(c.ended_reason)}</span> : null}
                   </div>
-                  {c.summary ? <p>{String(c.summary)}</p> : null}
-                  {c.transcript ? <pre className={styles.transcript}>{String(c.transcript)}</pre> : null}
+                  {c.summary ? <p className={styles.callSummary}>{str(c.summary)}</p> : null}
+                  {c.transcript ? <pre className={styles.transcript}>{str(c.transcript)}</pre> : null}
                 </article>
               ))}
             </section>
