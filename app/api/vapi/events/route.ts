@@ -3,13 +3,10 @@ import { findActiveByPhone, saveCallRecord } from '@/lib/patients';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Vapi server events. We only care about end-of-call-report, which carries the
- * transcript and the reason the call ended -- including the ugly ones (pipeline
- * errors, silence timeouts, a caller hanging up mid-registration), which is
- * exactly what you want when a reviewer says "it dropped on me".
- * Everything else is acknowledged and ignored.
- */
+/* Vapi server events. Only end-of-call-report is handled; it carries the
+ * transcript and the reason the call ended, including pipeline errors,
+ * silence timeouts and mid-registration hangups. Everything else is
+ * acknowledged and ignored. */
 export async function POST(req: NextRequest) {
   const expected = process.env.VAPI_SERVER_SECRET;
   if (expected && req.headers.get('x-vapi-secret') !== expected) {
@@ -34,9 +31,8 @@ export async function POST(req: NextRequest) {
     (call.customer as { number?: string } | undefined)?.number ??
     (message.customer as { number?: string } | undefined)?.number ?? null;
 
-  // A completed registration already stamped patient_id during the call. If the
-  // caller hung up before saving, match on number so the transcript is still
-  // attached to whoever they are.
+  // A completed registration already stamped patient_id during the call.
+  // If the caller hung up first, match on number so the transcript still lands.
   let patientId: string | null = null;
   if (callerNumber) {
     const existing = await findActiveByPhone(callerNumber).catch(() => null);

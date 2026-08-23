@@ -1,7 +1,7 @@
 import styles from './page.module.css';
 import { listPatients, listRecentCalls } from '@/lib/patients';
 
-// Always read live -- a registration made thirty seconds ago must show up.
+// Always read live; a registration from seconds ago must appear.
 export const dynamic = 'force-dynamic';
 
 type Search = Promise<Record<string, string | string[] | undefined>>;

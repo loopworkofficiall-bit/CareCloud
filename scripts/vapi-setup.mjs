@@ -1,14 +1,10 @@
 #!/usr/bin/env node
-/**
- * Provisions the Vapi assistant from vapi/assistant.json + vapi/system-prompt.md,
- * pointing every tool and the server webhook at APP_URL.
- *
- *   npm run vapi:setup
- *
- * Creates on first run; pass VAPI_ASSISTANT_ID to update in place. Keeping this
- * in code means the prompt in the repo is the prompt that is actually live --
- * no copy-paste drift between the README and the dashboard.
- */
+// npm run vapi:setup
+//
+// Provisions the Vapi assistant from vapi/assistant.json and
+// vapi/system-prompt.md, pointing the tools and server webhook at APP_URL.
+// Creates on first run; set VAPI_ASSISTANT_ID to update in place. Keeping it
+// in code keeps the committed prompt and the live prompt in step.
 import { readFileSync } from 'node:fs';
 
 try { process.loadEnvFile('.env.local'); } catch { /* CI passes real env vars */ }
@@ -19,7 +15,7 @@ if (!VAPI_PRIVATE_KEY) throw new Error('VAPI_PRIVATE_KEY is not set.');
 if (!APP_URL) throw new Error('APP_URL is not set (e.g. https://carecloud.vercel.app).');
 if (!/^https:\/\//.test(APP_URL)) throw new Error('APP_URL must be https -- Vapi will not call http.');
 
-/** The system message is the slice between the SYSTEM MESSAGE heading and the design notes. */
+// The system message is the slice between the SYSTEM MESSAGE heading and the design notes.
 function extractPrompt() {
   const md = readFileSync('vapi/system-prompt.md', 'utf8');
   const start = md.indexOf('## SYSTEM MESSAGE');
@@ -31,8 +27,7 @@ function extractPrompt() {
 const headers = { 'x-vapi-secret': VAPI_SERVER_SECRET ?? '' };
 const config = JSON.parse(readFileSync('vapi/assistant.json', 'utf8'));
 
-// systemPromptFile is our own marker, not part of the Vapi schema -- swap it
-// for the real message and point the tools at this deployment.
+// systemPromptFile is our own marker, not part of the Vapi schema.
 delete config.model.systemPromptFile;
 config.model.messages = [{ role: 'system', content: extractPrompt() }];
 config.model.tools = config.model.tools.map((t) => ({

@@ -1,13 +1,6 @@
-/**
- * Voice input arrives dirty. The caller says "five five five, one two three,
- * four five six seven" and the transcriber hands us "(555) 123-4567" -- or
- * "555 123 4567", or "1-555-123-4567". Same story for dates, states, emails.
- *
- * These helpers coerce whatever we get into the canonical storage form and
- * return null when a value is genuinely unusable, so Zod can raise a
- * field-specific error that the agent re-prompts with. All pure, all covered
- * by tests/normalize.test.mjs.
- */
+// Coercion of speech-transcribed input into canonical storage form.
+// Returns null when a value is unusable, so the caller can raise a
+// field-specific error rather than storing a guess.
 
 const STATE_NAMES: Record<string, string> = {
   alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA',
@@ -32,8 +25,7 @@ export function normalizePhone(input: unknown): string | null {
   if (typeof input !== 'string' && typeof input !== 'number') return null;
   let d = String(input).replace(/\D/g, '');
   if (d.length === 11 && d.startsWith('1')) d = d.slice(1);
-  // NANP: area code and exchange both start 2-9. Rejects the classic
-  // "I only heard 3 digits" case as well as malformed area codes.
+  // NANP: area code and exchange both start 2-9.
   if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d)) return null;
   return d;
 }
@@ -50,15 +42,14 @@ export function normalizeDob(input: unknown): string | null {
   else if (iso) [y, m, d] = [+iso[1], +iso[2], +iso[3]];
   else return null;
 
-  // Round-trip through UTC to reject impossible dates like 02/31/1990,
-  // which Date() would silently roll forward into March.
+  // Round-trip through UTC: Date() silently rolls 02/31 into March.
   const dt = new Date(Date.UTC(y, m - 1, d));
   if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
 
   const now = new Date();
   const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   if (dt.getTime() > todayUtc) return null;                 // no future dates of birth
-  if (y < now.getUTCFullYear() - 120) return null;          // no 130-year-olds
+  if (y < now.getUTCFullYear() - 120) return null;          // sanity bound
 
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${y}-${pad(m)}-${pad(d)}`;
@@ -106,11 +97,7 @@ export function normalizeEmail(input: unknown): string | null {
   return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(s) ? s : null;
 }
 
-/**
- * Trim, collapse whitespace, reject anything implausible as a name.
- * The letter range covers Latin-1 / Latin Extended-A so accented names
- * survive; digits and punctuation do not.
- */
+// Letter range covers Latin-1 and Latin Extended-A so accented names survive.
 export function normalizeName(input: unknown): string | null {
   if (typeof input !== 'string') return null;
   const s = input.trim().replace(/\s+/g, ' ');

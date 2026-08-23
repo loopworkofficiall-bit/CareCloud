@@ -7,17 +7,13 @@ import { normalizePhone } from '@/lib/normalize';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Vapi tool webhook.
+/* Vapi tool webhook.
  *
- * Vapi POSTs here whenever the assistant invokes one of its tools, and feeds
- * whatever string we return straight back into the model as the tool result.
- * So the shape of these replies is itself prompt engineering: a failed save
- * returns the exact list of bad fields, which is what lets the agent re-prompt
- * for the one field that was wrong instead of restarting the intake.
+ * The string returned for each tool call is fed back to the model as the tool
+ * result, so a failed save returns the exact list of invalid fields and the
+ * agent re-prompts for those alone.
  *
- * Contract: { results: [{ toolCallId, result }] }
- */
+ * Response contract: { results: [{ toolCallId, result }] } */
 
 type ToolCall = {
   id: string;
@@ -44,8 +40,8 @@ function parseArgs(raw: unknown): Record<string, unknown> {
 const say = (v: unknown) => JSON.stringify(v);
 
 export async function POST(req: NextRequest) {
-  // Shared-secret auth, set as a custom server header on the Vapi assistant,
-  // so a leaked URL on its own cannot write to the database.
+  // Shared secret, sent by Vapi as a custom header. A leaked URL alone
+  // cannot write to the database.
   const expected = process.env.VAPI_SERVER_SECRET;
   if (expected && req.headers.get('x-vapi-secret') !== expected) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -100,7 +96,7 @@ async function runTool(name: string, args: Record<string, unknown>, ctx: CallCtx
     }
   } catch (e) {
     console.error(`[vapi.tool.${name}]`, e);
-    // The agent reads this and apologises to the caller rather than going silent.
+    // The agent reads this and tells the caller, rather than going silent.
     return say({
       ok: false,
       error: 'The records system is temporarily unavailable.',
@@ -203,10 +199,8 @@ async function updatePatientTool(args: Record<string, unknown>, ctx: CallCtx) {
   }
 }
 
-/**
- * Stamp the call row now so the end-of-call webhook can attach the transcript
- * to the right patient. Best effort: never fail a registration over logging.
- */
+// Stamp the call row now so the end-of-call webhook can attach the transcript
+// to the right patient. Best effort: never fail a registration over logging.
 async function linkCall(ctx: CallCtx, patientId: string) {
   if (!ctx.callId) return;
   try {

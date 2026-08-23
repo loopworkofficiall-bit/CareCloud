@@ -1,7 +1,7 @@
--- CareCloud patient registration schema (PostgreSQL / Neon)
--- Constraints are duplicated in lib/patients.ts (Zod) on purpose:
--- Zod gives the voice agent field-level errors to re-prompt with,
--- the DB is the last line of defence for anything that bypasses it.
+-- CareCloud patient registration schema (PostgreSQL).
+-- Constraints are intentionally duplicated in lib/patients.ts: Zod produces the
+-- field-level errors the voice agent re-prompts on, the database enforces them
+-- for anything that bypasses the service layer.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
 

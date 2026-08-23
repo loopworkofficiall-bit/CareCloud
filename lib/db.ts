@@ -1,12 +1,8 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 
-/**
- * Neon HTTP driver: one round-trip per query, no pool to babysit on serverless.
- *
- * The client is created lazily so that importing the service layer does not
- * require a database -- the validation tests import lib/patients.ts without a
- * DATABASE_URL, and `next build` should not fall over on a missing env var.
- */
+// Neon HTTP driver: one round-trip per query, no pool to manage on serverless.
+// Created lazily so importing the service layer does not require a database
+// (the tests do exactly that, and next build must not fail on a missing var).
 let client: NeonQueryFunction<false, false> | null = null;
 
 function connection() {
@@ -19,7 +15,7 @@ function connection() {
   return client;
 }
 
-/** Every call site goes through here, so nothing is ever string-concatenated. */
+// All queries go through here, parameterised.
 export const sql = {
   query: (text: string, params: unknown[] = []) => connection().query(text, params),
 };

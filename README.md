@@ -40,10 +40,9 @@ see [Security](#security) for what that means and what is actually protected.
   Neon Postgres
 ```
 
-The important line is the one that is *not* in the diagram: there is no second
-validation path. `lib/patients.ts` holds one Zod schema and one service layer,
-and both the REST API and the voice agent go through them. A record created by
-phone is byte-identical to one created by `curl`.
+There is no second validation path. `lib/patients.ts` holds one Zod schema and
+one service layer, and both the REST API and the voice agent go through them.
+A record created by phone is identical to one created by `curl`.
 
 ### How the agent and the database actually talk
 
@@ -58,9 +57,8 @@ the webhook runs the same schema the REST endpoint runs, and on failure returns:
 ```
 
 Vapi feeds that string straight back to the model, so the agent re-prompts for
-the one field that failed instead of restarting the intake. That is the whole
-trick: **conversational error recovery is a property of the API response, not of
-the prompt.** The prompt only has to be told to obey it.
+the one field that failed instead of restarting the intake. Conversational error
+recovery is therefore a property of the API response rather than of the prompt.
 
 ## Tech stack, and why
 
@@ -231,7 +229,8 @@ the guarantee that a bad payload returns errors for *only* the bad fields.
   inferring a ZIP code from the city instead of using what the caller said.
   None of that is visible from unit tests or simulated webhook payloads. The
   endpointing and barge-in values in `vapi/assistant.json` are calibration
-  knobs, commented with which way to move them.
+  knobs; the design notes in `vapi/system-prompt.md` record which way to move
+  them and why.
 
 ## Next steps
 

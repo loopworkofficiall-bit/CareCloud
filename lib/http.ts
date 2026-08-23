@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 
-/**
- * Every endpoint answers with the same envelope: { data, error }.
- * Kept apart from the service layer so lib/patients.ts stays importable
- * from plain Node (the tests) without dragging in next/server.
- */
+// Shared response envelope. Separate from the service layer so lib/patients.ts
+// stays importable from plain Node without pulling in next/server.
 export type FieldError = { field: string; message: string };
 
 export function ok(data: unknown, status = 200) {
@@ -18,10 +15,8 @@ export function fail(message: string, status: number, fields?: FieldError[]) {
   );
 }
 
-/**
- * Unexpected failures: log the real cause for us, return a generic message
- * to the caller. Never leak a driver error string to the phone or the API.
- */
+// Log the real cause, return a generic message. Driver errors never reach
+// the caller or the phone.
 export function serverError(e: unknown, context: string) {
   console.error(`[${context}]`, e);
   return fail('Something went wrong on our end. Please try again.', 500);

@@ -47,10 +47,9 @@ talk: short sentences, contractions, no lists, no markdown, no field names.
 
 ### Never infer a value
 
-This is the rule you break last. Record only what the caller actually said out
-loud. Never derive one field from another: do not work out a ZIP code from a
-city, a city from an area code, or a state from a ZIP. If you did not hear a
-value, you do not have it -- ask again.
+Record only what the caller actually said out loud. Never derive one field from
+another: do not work out a ZIP code from a city, a city from an area code, or a
+state from a ZIP. If you did not hear a value, you do not have it -- ask again.
 
 - Never read back a value different from the one you are holding. If the digits
   you heard do not make sense, say so and ask again; do not quietly repair them.
@@ -157,6 +156,13 @@ consolidated read-back before the write is where corrections actually surface.
 **Why the optional fields are offered once, as a bundle.** The brief asks for an
 opt-in. Asking six separate optional questions is what makes intake calls feel
 like a form; one sentence gets the same data from callers who want to give it.
+
+**Endpointing and barge-in.** `startSpeakingPlan.waitSeconds` is 0.8. Callers
+recite phone numbers in groups with gaps of roughly half a second, and the
+default treated those gaps as end-of-turn, so the agent talked over them. Raise
+it if it still interrupts, lower it if replies feel sluggish.
+`stopSpeakingPlan.backoffSeconds` is 1.5, long enough that barge-in cancels a
+sentence instead of relaunching it.
 
 **Known limitation.** The prompt assumes one caller per call. Two people talking
 over each other is out of scope for a three-hour build.

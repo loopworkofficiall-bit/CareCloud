@@ -5,18 +5,15 @@ import {
   normalizeSex, normalizeState, normalizeZip, optionalText,
 } from './normalize.ts';
 
-/* ------------------------------------------------------------------ *
- * Validation
+/* Validation.
  *
- * One schema serves both the public REST API and the voice agent's tool
- * call. The agent is never trusted to validate -- it is only trusted to
- * *relay* the field-level errors produced here, so it can re-prompt for
- * exactly the field that failed rather than restarting the whole form.
- * ------------------------------------------------------------------ */
+ * One schema for the REST API and the voice agent webhook. The agent does no
+ * validation of its own; it relays the field-level errors produced here so it
+ * can re-prompt for the single field that failed. */
 
 type Norm<T> = (v: unknown) => T | null;
 
-/** Required field: run the normalizer, raise a speakable error if it fails. */
+// Required: normalise, or raise an error phrased to be read aloud.
 function required<T>(fn: Norm<T>, message: string) {
   return z.unknown().transform((v, ctx) => {
     const out = fn(v);
@@ -28,12 +25,10 @@ function required<T>(fn: Norm<T>, message: string) {
   });
 }
 
-/**
- * Optional field: absent / blank / "none" all collapse to undefined, which
- * createPatient then omits from the INSERT so column defaults still apply.
- * The trailing .optional() is required -- Zod rejects a transform that
- * returns undefined unless the key itself is optional.
- */
+// Optional: absent, blank and "none" collapse to undefined, which
+// createPatient omits from the INSERT so column defaults still apply.
+// The trailing .optional() is required: Zod rejects a transform returning
+// undefined unless the key itself is optional.
 function optional<T>(fn: Norm<T>, message: string) {
   return z.unknown().transform((v, ctx) => {
     if (v === undefined || v === null) return undefined;
@@ -107,12 +102,8 @@ export function fieldErrors(err: z.ZodError): { field: string; message: string }
 export const isUuid = (v: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
-/* ------------------------------------------------------------------ *
- * Service layer
- *
- * The REST routes and the Vapi tool webhook both call these functions,
- * so a record written by phone is byte-identical to one written by API.
- * ------------------------------------------------------------------ */
+/* Service layer. Shared by the REST routes and the Vapi tool webhook, so a
+ * record written by phone is identical to one written by API. */
 
 /** Fixed allow-list: nothing user-supplied ever reaches a column name. */
 const WRITABLE = [
@@ -131,8 +122,8 @@ const COLUMNS = `patient_id, ${WRITABLE.join(', ')},
 export type Patient = Record<string, unknown> & { patient_id: string };
 
 export class DuplicatePhoneError extends Error {
-  // Written out longhand rather than as a parameter property so that Node can
-  // run this file directly under type stripping for the tests.
+  // Longhand rather than a parameter property: Node's type stripping, which
+  // the tests rely on to import this file directly, rejects those.
   existing: Patient;
 
   constructor(existing: Patient) {
@@ -257,7 +248,7 @@ export async function softDeletePatient(id: string): Promise<Patient | null> {
   return (rows[0] as Patient) ?? null;
 }
 
-/** Written by the Vapi end-of-call webhook; a failure here never blocks a call. */
+// Written by the end-of-call webhook. A failure here never blocks a call.
 export async function saveCallRecord(rec: {
   call_id: string; patient_id?: string | null; caller_number?: string | null;
   ended_reason?: string | null; duration_secs?: number | null;

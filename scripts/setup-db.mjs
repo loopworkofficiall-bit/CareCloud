@@ -1,14 +1,10 @@
 #!/usr/bin/env node
-/**
- * Applies db/schema.sql and inserts two demo patients.
- * Idempotent: safe to run against an existing database.
- *
- *   npm run db:setup
- *
- * Uses node-postgres rather than the Neon HTTP driver because the schema is a
- * multi-statement script containing a PL/pgSQL body, which the HTTP endpoint
- * will not accept in one request.
- */
+// npm run db:setup
+//
+// Applies db/schema.sql and inserts two demo patients. Idempotent.
+// Uses node-postgres rather than the Neon HTTP driver: the schema is a
+// multi-statement script with a PL/pgSQL body, which the HTTP endpoint
+// will not accept in a single request.
 import { readFileSync } from 'node:fs';
 import pg from 'pg';
 
@@ -56,7 +52,7 @@ try {
   let inserted = 0;
   for (const p of SEED) {
     const placeholders = COLS.map((_, i) => `$${i + 1}`).join(', ');
-    // ON CONFLICT against the partial unique index keeps re-runs a no-op.
+    // ON CONFLICT against the partial unique index makes re-runs a no-op.
     const res = await client.query(
       `INSERT INTO patients (${COLS.join(', ')}) VALUES (${placeholders})
        ON CONFLICT (phone_number) WHERE deleted_at IS NULL DO NOTHING
