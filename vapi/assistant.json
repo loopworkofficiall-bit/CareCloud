@@ -45,7 +45,10 @@
         "type": "function",
         "async": false,
         "messages": [
-          { "type": "request-start", "content": "Alright, let me get that saved." }
+          {
+            "type": "request-start",
+            "content": "Alright, let me get that saved."
+          }
         ],
         "function": {
           "name": "save_patient",
@@ -53,29 +56,75 @@
           "parameters": {
             "type": "object",
             "properties": {
-              "first_name": { "type": "string" },
-              "last_name": { "type": "string" },
-              "date_of_birth": { "type": "string", "description": "MM/DD/YYYY" },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "date_of_birth": {
+                "type": "string",
+                "description": "MM/DD/YYYY"
+              },
               "sex": {
                 "type": "string",
-                "enum": ["Male", "Female", "Other", "Decline to Answer"]
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other",
+                  "Decline to Answer"
+                ]
               },
-              "phone_number": { "type": "string", "description": "10-digit US number" },
-              "email": { "type": "string" },
-              "address_line_1": { "type": "string" },
-              "address_line_2": { "type": "string" },
-              "city": { "type": "string" },
-              "state": { "type": "string", "description": "Two-letter abbreviation, e.g. TX" },
-              "zip_code": { "type": "string", "description": "5 digits or ZIP+4" },
-              "insurance_provider": { "type": "string" },
-              "insurance_member_id": { "type": "string" },
-              "preferred_language": { "type": "string" },
-              "emergency_contact_name": { "type": "string" },
-              "emergency_contact_phone": { "type": "string" }
+              "phone_number": {
+                "type": "string",
+                "description": "10-digit US number"
+              },
+              "email": {
+                "type": "string"
+              },
+              "address_line_1": {
+                "type": "string"
+              },
+              "address_line_2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string",
+                "description": "Two-letter abbreviation, e.g. TX"
+              },
+              "zip_code": {
+                "type": "string",
+                "description": "5 digits or ZIP+4"
+              },
+              "insurance_provider": {
+                "type": "string"
+              },
+              "insurance_member_id": {
+                "type": "string"
+              },
+              "preferred_language": {
+                "type": "string"
+              },
+              "emergency_contact_name": {
+                "type": "string"
+              },
+              "emergency_contact_phone": {
+                "type": "string"
+              }
             },
             "required": [
-              "first_name", "last_name", "date_of_birth", "sex", "phone_number",
-              "address_line_1", "city", "state", "zip_code"
+              "first_name",
+              "last_name",
+              "date_of_birth",
+              "sex",
+              "phone_number",
+              "address_line_1",
+              "city",
+              "state",
+              "zip_code"
             ]
           }
         }
@@ -84,7 +133,10 @@
         "type": "function",
         "async": false,
         "messages": [
-          { "type": "request-start", "content": "One moment while I update that." }
+          {
+            "type": "request-start",
+            "content": "One moment while I update that."
+          }
         ],
         "function": {
           "name": "update_patient",
@@ -92,32 +144,83 @@
           "parameters": {
             "type": "object",
             "properties": {
-              "patient_id": { "type": "string", "description": "UUID from lookup_patient" },
-              "first_name": { "type": "string" },
-              "last_name": { "type": "string" },
-              "date_of_birth": { "type": "string", "description": "MM/DD/YYYY" },
+              "patient_id": {
+                "type": "string",
+                "description": "UUID from lookup_patient"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "date_of_birth": {
+                "type": "string",
+                "description": "MM/DD/YYYY"
+              },
               "sex": {
                 "type": "string",
-                "enum": ["Male", "Female", "Other", "Decline to Answer"]
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other",
+                  "Decline to Answer"
+                ]
               },
-              "phone_number": { "type": "string" },
-              "email": { "type": "string" },
-              "address_line_1": { "type": "string" },
-              "address_line_2": { "type": "string" },
-              "city": { "type": "string" },
-              "state": { "type": "string" },
-              "zip_code": { "type": "string" },
-              "insurance_provider": { "type": "string" },
-              "insurance_member_id": { "type": "string" },
-              "preferred_language": { "type": "string" },
-              "emergency_contact_name": { "type": "string" },
-              "emergency_contact_phone": { "type": "string" }
+              "phone_number": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "address_line_1": {
+                "type": "string"
+              },
+              "address_line_2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "zip_code": {
+                "type": "string"
+              },
+              "insurance_provider": {
+                "type": "string"
+              },
+              "insurance_member_id": {
+                "type": "string"
+              },
+              "preferred_language": {
+                "type": "string"
+              },
+              "emergency_contact_name": {
+                "type": "string"
+              },
+              "emergency_contact_phone": {
+                "type": "string"
+              }
             },
-            "required": ["patient_id"]
+            "required": [
+              "patient_id"
+            ]
           }
         }
       }
     ]
   },
-  "serverMessages": ["end-of-call-report"]
+  "serverMessages": [
+    "end-of-call-report"
+  ],
+  "startSpeakingPlan": {
+    "waitSeconds": 0.8
+  },
+  "stopSpeakingPlan": {
+    "numWords": 2,
+    "voiceSeconds": 0.2,
+    "backoffSeconds": 1.5
+  }
 }
