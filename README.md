@@ -219,6 +219,19 @@ the guarantee that a bad payload returns errors for *only* the bad fields.
   rather than silently dropping the registration, but the data is not queued.
 - **Appointment scheduling was not built.** It was the bonus with the least
   signal per minute of build time.
+- **The LLM is billed through Vapi, not a bring-your-own key.** The plan was a
+  free-tier Google key so Vapi credit went only to telephony. Vapi validates a
+  Google credential by calling `gemini-2.5-flash`, which Google no longer
+  serves to new projects, so validation 404s no matter which model the
+  assistant actually runs. Moot once the agent moved to GPT-4.1, but it is why
+  the cheaper path was dropped.
+- **The prompt was tuned against real calls, not just tests.** Three live calls
+  changed it three times: the model was answering its own questions, then
+  collecting phone numbers three digits at a time and losing track, then
+  inferring a ZIP code from the city instead of using what the caller said.
+  None of that is visible from unit tests or simulated webhook payloads. The
+  endpointing and barge-in values in `vapi/assistant.json` are calibration
+  knobs, commented with which way to move them.
 
 ## Next steps
 
