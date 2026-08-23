@@ -11,10 +11,10 @@ tier — no card was entered anywhere.
 
 | | |
 |---|---|
-| **Phone number** | `+1 (___) ___-____` |
-| **API base URL** | `https://________.vercel.app` |
-| **Dashboard** | `https://________.vercel.app` |
-| **Repository** | `https://github.com/________` |
+| **Phone number** | **+1 (843) 638-6075** |
+| **API base URL** | https://carecloud-two.vercel.app |
+| **Dashboard** | https://carecloud-two.vercel.app |
+| **Repository** | https://github.com/loopworkofficiall-bit/CareCloud |
 
 No credentials are needed to test. The API is intentionally open for review;
 see [Security](#security) for what that means and what is actually protected.
@@ -25,7 +25,7 @@ see [Security](#security) for what that means and what is actually protected.
   Caller
     │  PSTN
     ▼
-  Vapi  ── Deepgram Nova-3 (STT) · Gemini 2.5 Flash (LLM) · Vapi TTS
+  Vapi  ── Deepgram Nova-3 (STT) · Gemini 3.5 Flash (LLM) · Vapi TTS
     │
     │  HTTPS tool calls + end-of-call webhook  (x-vapi-secret)
     ▼
@@ -67,7 +67,7 @@ the prompt.** The prompt only has to be told to obey it.
 | Layer | Choice | Why this one |
 |---|---|---|
 | Telephony + STT/TTS | **Vapi** | Free Vapi-owned US numbers, $10 signup credit, no card. Twilio's trial is unusable here — since their policy change, inbound calls to a trial number are rejected unless the caller's number is pre-verified, so a reviewer could not dial it. |
-| LLM | **Gemini 2.5 Flash** (BYOK) | Free tier, and fast enough that turn latency stays conversational. Brought as our own key so Vapi credit is spent only on telephony. |
+| LLM | **Gemini 3.5 Flash** | Fast enough that turn latency stays conversational, and strong at tool calling. Intended to run on a bring-your-own Google key so Vapi credit went only to telephony -- see the trade-offs section for why that did not work out. |
 | Backend + dashboard | **Next.js on Vercel** | One repo, one deploy, API routes and the dashboard together. Render's free tier sleeps after 15 minutes and cold-starts for ~50s — long enough to time out a tool call mid-conversation, which would be a live failure during review. |
 | Database | **Neon Postgres** | Free tier, real constraints and a real UUID type, wakes from idle in under a second. SQLite would have been simpler but Vercel's filesystem is ephemeral, so it would not survive the "call back and the data is still there" requirement. |
 | Validation | **Zod** | One schema, two consumers, field-level errors that are already written as speakable sentences. |

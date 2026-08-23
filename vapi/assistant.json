@@ -19,7 +19,7 @@
   },
   "model": {
     "provider": "google",
-    "model": "gemini-2.5-flash",
+    "model": "gemini-3.5-flash",
     "temperature": 0.3,
     "systemPromptFile": "vapi/system-prompt.md",
     "tools": [
