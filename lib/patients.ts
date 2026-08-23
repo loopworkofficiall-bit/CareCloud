@@ -269,6 +269,7 @@ export async function saveCallRecord(rec: {
      VALUES ($1,$2,$3,$4,$5,$6,$7)
      ON CONFLICT (call_id) DO UPDATE SET
        patient_id    = COALESCE(EXCLUDED.patient_id, calls.patient_id),
+       caller_number = COALESCE(EXCLUDED.caller_number, calls.caller_number),
        ended_reason  = EXCLUDED.ended_reason,
        duration_secs = EXCLUDED.duration_secs,
        summary       = EXCLUDED.summary,
